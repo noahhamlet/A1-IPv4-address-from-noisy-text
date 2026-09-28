@@ -1,0 +1,39 @@
+9/27/26
+  -AI engine used: ChatGPT
+ -Began with prompting the AI for code to find and decipher an IPv4 address in the string of text, including the libraries that cannot be used, all requirments listed, and the prototype needed.
+Write a C or C++ program that reads a line of text and extracts a single valid IPv4 address — optionally followed by a port number — embedded anywhere in that text. Only digits, periods (.), and colons (:) are ever part of a valid token; every other character is garbage and is skipped. A candidate token must match the address grammar in full — no partial matches, no truncating to find a valid piece inside a longer run. Built-in functions/libraries you may not use
+Any string-to-number conversion function: atoi, atol, atoll, strtol, strtoul, strtod, stoi, stol, stoul, sscanf, scanf with numeric conversions.
+Any address-parsing library function: inet_aton, inet_pton, inet_addr, or equivalents.
+Any regular-expression facility (std::regex, POSIX regex.h, or similar) — the parsing and validation logic must be your own character-by-character code, not a pattern matched by a library.
+Standard character-classification functions (isdigit, etc.) are fine to use.
+Other requirements
+Exactly one valid address may be extracted per input line; everything else in the line is either garbage (skipped) or part of a candidate token that fails validation.
+Reject anything that does not exactly match the grammar above — wrong octet count, empty octet, out-of-range octet or port, a disallowed leading zero, a second colon, a colon not immediately after the fourth octet, or a stray period/colon directly adjacent to an otherwise-valid address.
+On success, print: Extracted IPv4 address: A.B.C.D (decimal value: N, port: P) where N is the 32-bit decimal value and P is the port number or the literal text none.
+Program requirements
+Input loop: main continuously prompts the user for input until the user enters END (case-sensitive), then prints Program terminated. and exits.
+Extraction function: implement extractIPv4 exactly as prototyped above. All digit accumulation must be done by hand.
+Display: main receives the result from extractIPv4 and formats the output exactly as specified above.
+C++
+
+// Returns true if a valid address was found, false otherwise.
+// On success: outAddress holds the 32-bit value,
+// and outPort holds the port number, or -1 if no port was present.
+// On failure: outAddress is set to 0 and outPort is set to -1.
+bool extractIPv4(const std::string& str, unsigned long& outAddress, int& outPort);
+
+Code given was checked and ran through several inputs
+
+- inputs tested:
+  Hello 192.168.1.25 world - gave correct output
+255.255.255.256 - did not extract
+1.256.1.1 - did not extract
+end - extracted nothing
+ 1.1.1.256 - did not extract
+fjijfioejfiajsiofj - extracted nothing
+-faifjioaejfoiasejfioaejsioajes - extracte dnothing
+fffff192.168.1.25:8080: gave correct output
+
+Code is working exactly as intended, thus no modifications were made.
+
+
