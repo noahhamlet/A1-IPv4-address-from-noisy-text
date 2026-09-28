@@ -1,0 +1,282 @@
+#include <iostream>
+#include <string>
+#include <cctype>
+//no modifications were made, except for comments to explain the code.
+using namespace std;
+
+
+//Returns a true if it finds a valid address, otherwise returns false and sets outPort to -1, if true, holds port number.
+bool extractIPv4(const std::string& str, unsigned long& outAddress, int& outPort)
+{
+    outAddress = 0;
+    outPort = -1;
+
+    size_t i = 0;
+
+    while (i < str.length())
+    {
+        // Skips through characters that will not be present in an ipv4 address.
+        while (i < str.length() &&
+               !isdigit(str[i]) &&
+               str[i] != '.' &&
+               str[i] != ':')
+        {
+            i++;
+        }
+
+        if (i >= str.length())
+            break;
+
+        // finds candidate token.
+        size_t start = i;
+
+        while (i < str.length() &&
+               (isdigit(str[i]) ||
+                str[i] == '.' ||
+                str[i] == ':'))
+        {
+            i++;
+        }
+
+        size_t end = i;
+
+        // Validates found candidate token.
+        int octets[4] = {0, 0, 0, 0};
+        int octetCount = 0;
+
+        int currentValue = 0;
+        int currentDigits = 0;
+        bool leadingZero = false;
+
+        bool hasPort = false;
+        int port = -1;
+
+        bool valid = true;
+
+        size_t j = start;
+
+        // collects the 4 ipv4 octets
+        while (j != end)
+        {
+            if (!isdigit(str[j]))
+            {
+                valid = false;
+                break;
+            }
+
+            currentValue = 0;
+            currentDigits = 0;
+            leadingZero = false;
+
+            // Reads 1 octet
+            while (j < end && isdigit(str[j]))
+            {
+                if (currentDigits == 0 && str[j] == '0')
+                    leadingZero = true;
+
+                // accumulates digits
+                currentValue = currentValue * 10 + (str[j] - '0');
+                currentDigits++;
+
+                // ensures octet does not go past size limit.
+                if (currentDigits > 3)
+                    valid = false;
+
+                j++;
+            }
+
+            if (!valid)
+                break;
+
+            // check rules to esnure octet isn't empty, despite it being an impossible imput
+            // 
+            if (currentDigits == 0)
+            {
+                valid = false;
+                break;
+            }
+
+            // defines leading zeroes are not allowed unless it is "0".
+            if (leadingZero && currentDigits > 1)
+            {
+                valid = false;
+                break;
+            }
+
+            // Octet is 0-255.
+            if (currentValue > 255)
+            {
+                valid = false;
+                break;
+            }
+
+            if (octetCount >= 4)
+            {
+                valid = false;
+                break;
+            }
+
+            octets[octetCount] = currentValue;
+            octetCount++;
+
+            if (j >= end)
+                break;
+
+            // checks to see if the octet has ended.
+            if (str[j] == '.')
+            {
+                j++;
+
+                // ensures a period is not followed by a period
+                if (j >= end || !isdigit(str[j]))
+                {
+                    valid = false;
+                    break;
+                }
+            }
+            else if (str[j] == ':')
+            {
+                // makes sure colons are only placed at the end of the 4th octet.
+                if (octetCount != 4)
+                {
+                    valid = false;
+                    break;
+                }
+
+                hasPort = true;
+                j++;
+
+                // ensures port is not empty.
+                if (j >= end || !isdigit(str[j]))
+                {
+                    valid = false;
+                    break;
+                }
+
+                port = 0;
+                int portDigits = 0;
+                bool portLeadingZero = false;
+
+                while (j < end && isdigit(str[j]))
+                {
+                    if (portDigits == 0 && str[j] == '0')
+                        portLeadingZero = true;
+
+                    // accumulates the port
+                    port = port * 10 + (str[j] - '0');
+                    portDigits++;
+
+                    // esures only ports of digits 4 are allowed.
+                    if (portDigits > 5)
+                        valid = false;
+
+                    j++;
+                }
+
+                if (!valid)
+                    break;
+
+                // Leading zeroes are not allowed.
+                if (portLeadingZero && portDigits > 1)
+                {
+                    valid = false;
+                    break;
+                }
+
+                // ensures port is 0-65535.
+                if (port > 65535)
+                {
+                    valid = false;
+                    break;
+                }
+
+                //ensures the end of the token is after the port.
+                if (j != end)
+                {
+                    valid = false;
+                    break;
+                }
+
+                break;
+            }
+            else
+            {
+                valid = false;
+                break;
+            }
+        }
+
+        // A valid IPv4 address must have exactly four octets.
+        if (octetCount != 4)
+            valid = false;
+
+        if (valid)
+        {
+            // Converts token to a 32-bit decimal value.
+            outAddress =
+                static_cast<unsigned long>(octets[0]) * 16777216UL +
+                static_cast<unsigned long>(octets[1]) * 65536UL +
+                static_cast<unsigned long>(octets[2]) * 256UL +
+                static_cast<unsigned long>(octets[3]);
+
+            if (hasPort)
+                outPort = port;
+            else
+                outPort = -1;
+
+            return true;
+        }
+
+        // program continues after the candidate has failed.
+    }
+
+    return false;
+}
+//print token output, if any, and take inputs.
+int main()
+{
+    string line;
+
+    while (true)
+    {
+        cout << "Enter a line: ";
+        getline(cin, line);
+
+        if (line == "END")
+        {
+            cout << "Program terminated." << endl;
+            break;
+        }
+
+        unsigned long address;
+        int port;
+
+        if (extractIPv4(line, address, port))
+        {
+            //Recovers the individual octets from the 32-bit decimal value to print
+             
+            unsigned long a = (address / 16777216UL) % 256;
+            unsigned long b = (address / 65536UL) % 256;
+            unsigned long c = (address / 256UL) % 256;
+            unsigned long d = address % 256;
+
+            cout << "Extracted IPv4 address: "
+                 << a << "."
+                 << b << "."
+                 << c << "."
+                 << d
+                 << " (decimal value: "
+                 << address
+                 << ", port: ";
+
+            if (port == -1)
+                cout << "none";
+            else
+                cout << port;
+
+            cout << ")" << endl;
+        }
+    }
+
+    return 0;
+}
